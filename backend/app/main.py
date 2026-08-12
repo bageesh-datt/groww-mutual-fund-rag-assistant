@@ -159,9 +159,14 @@ try:
 
     @app.get("/")
     async def root():
-        index_file = backend_dir.parent / "frontend" / "index.html"
-        if index_file.exists():
-            return FileResponse(str(index_file))
+        possible_paths = [
+            backend_dir.parent / "frontend" / "index.html",
+            Path(__file__).resolve().parent.parent.parent / "frontend" / "index.html",
+            Path("/var/task/frontend/index.html")
+        ]
+        for p in possible_paths:
+            if p.exists():
+                return FileResponse(str(p))
         return {
             "message": f"Welcome to {settings.PROJECT_NAME} API v{settings.VERSION}",
             "docs": "/docs",
