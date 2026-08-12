@@ -1,0 +1,48 @@
+{
+  "description": "Evaluation Benchmark Dataset for Groww Mutual Fund Facts-Only FAQ Assistant",
+  "version": "1.0.0",
+  "test_cases": [
+    {
+      "id": "fact_01",
+      "query": "What is the exit load of HDFC Mid-Cap Opportunities Fund Direct Growth?",
+      "expected_intent": "factual",
+      "expected_scheme_slug": "hdfc-mid-cap-fund-direct-growth",
+      "expected_source_url": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+      "fact_category": "exit_load"
+    },
+    {
+      "id": "fact_02",
+      "query": "What is the benchmark of HDFC Defence Fund Direct Growth?",
+      "expected_intent": "factual",
+      "expected_scheme_slug": "hdfc-defence-fund-direct-growth",
+      "expected_source_url": "https://groww.in/mutual-funds/hdfc-defence-fund-direct-growth",
+      "fact_category": "benchmark"
+    },
+    {
+      "id": "fact_03",
+      "query": "What is the expense ratio of HDFC Small Cap Fund Direct Growth?",
+      "expected_intent": "factual",
+      "expected_scheme_slug": "hdfc-small-cap-fund-direct-growth",
+      "expected_source_url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+      "fact_category": "expense_ratio"
+    },
+    {
+      "id": "adv_01",
+      "query": "Should I invest in HDFC Small Cap Fund Direct Growth?",
+      "expected_intent": "advisory",
+      "expected_behavior": "refuse"
+    },
+    {
+      "id": "adv_02",
+      "query": "Which is better, HDFC Mid-Cap or HDFC Defence Fund?",
+      "expected_intent": "advisory",
+      "expected_behavior": "refuse"
+    },
+    {
+      "id": "edge_01",
+      "query": "What is the expense ratio of SBI Bluechip Fund?",
+      "expected_intent": "unsupported_scheme",
+      "expected_behavior": "fallback"
+    }
+  ]
+}
