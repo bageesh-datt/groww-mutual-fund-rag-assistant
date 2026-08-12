@@ -100,15 +100,18 @@ try:
         logger.info("==================================================")
         logger.info("STARTING GROWW FAQ ASSISTANT FASTAPI BACKEND")
         logger.info("==================================================")
-        try:
-            start_scheduler()
-        except Exception as e:
-            logger.error(f"Scheduler startup error: {e}")
+        is_serverless = bool(os.getenv("VERCEL")) or settings.ENVIRONMENT == "production"
+        if not is_serverless:
+            try:
+                start_scheduler()
+            except Exception as e:
+                logger.error(f"Scheduler startup error: {e}")
         yield
-        try:
-            stop_scheduler()
-        except Exception as e:
-            logger.error(f"Scheduler shutdown error: {e}")
+        if not is_serverless:
+            try:
+                stop_scheduler()
+            except Exception as e:
+                logger.error(f"Scheduler shutdown error: {e}")
 
     app = FastAPI(
         title=settings.PROJECT_NAME,

@@ -5,6 +5,7 @@ Handles Chroma DB local persistent storage and vector search using BAAI/bge-larg
 
 import json
 import math
+import os
 import re
 import sys
 from pathlib import Path
@@ -69,7 +70,13 @@ class VectorStoreManager:
         self._init_chroma_and_model()
 
     def _init_chroma_and_model(self):
-        # 1. Initialize SentenceTransformer BAAI/bge-large-en-v1.5 model if available
+        # 1. Skip heavy imports if running in Vercel serverless / production environment
+        is_serverless = bool(os.getenv("VERCEL")) or settings.ENVIRONMENT == "production"
+        if is_serverless:
+            logger.info("Production serverless environment detected. Utilizing precomputed vector store.")
+            return
+
+        # 2. Initialize SentenceTransformer BAAI/bge-large-en-v1.5 model if available (Local dev only)
         try:
             from sentence_transformers import SentenceTransformer
             logger.info(f"Loading embedding model '{self.embedding_model_name}'...")
@@ -78,7 +85,7 @@ class VectorStoreManager:
         except Exception as e:
             logger.warning(f"Could not load SentenceTransformer ('{e}'). Using deterministic 1024-dim embedding model.")
 
-        # 2. Initialize ChromaDB Client if available
+        # 3. Initialize ChromaDB Client if available (Local dev only)
         try:
             import chromadb
             logger.info(f"Initializing ChromaDB PersistentClient at '{self.db_dir}'...")
@@ -248,7 +255,13 @@ class VectorStoreManager:
             if fact_type and chunk.get("fact_type") != fact_type:
                 continue
 
-            sim = cosine_similarity(query_emb, emb)
+            if scheme_slug and fact_type and chunk.get("scheme_slug") == scheme_slug and chunk.get("fact_type") == fact_type:
+                sim = 1.0
+            elif scheme_slug and chunk.get("scheme_slug") == scheme_slug:
+                sim = max(0.85, cosine_similarity(query_emb, emb))
+            else:
+                sim = cosine_similarity(query_emb, emb)
+
             if sim >= score_threshold:
                 candidates.append({
                     "chunk_id": chunk["chunk_id"],
