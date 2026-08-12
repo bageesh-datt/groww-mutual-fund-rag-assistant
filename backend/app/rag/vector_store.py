@@ -87,7 +87,19 @@ class VectorStoreManager:
                 name=self.collection_name,
                 metadata={"hnsw:space": "cosine"}
             )
-            logger.info(f"ChromaDB collection '{self.collection_name}' ready.")
+            logger.info(f"ChromaDB collection '{self.collection_name}' ready (count: {self.collection.count()}).")
+            if self.collection.count() == 0:
+                backup_file = self.db_dir / "persistent_store.json"
+                if backup_file.exists():
+                    try:
+                        with open(backup_file, "r", encoding="utf-8") as f:
+                            store = json.load(f)
+                        if store:
+                            logger.info(f"Auto-hydrating ChromaDB collection from persistent_store.json ({len(store)} chunks)...")
+                            hydrated_chunks = [item["chunk"] for item in store.values()]
+                            self.upsert_chunks(hydrated_chunks)
+                    except Exception as he:
+                        logger.warning(f"ChromaDB auto-hydration warning: {he}")
         except Exception as e:
             logger.warning(f"ChromaDB client initialization warning ('{e}'). Using local persistent vector store.")
 
@@ -136,7 +148,7 @@ class VectorStoreManager:
                     embeddings=embeddings,
                     metadatas=metadatas
                 )
-                logger.info("ChromaDB upsert succeeded.")
+                logger.info(f"ChromaDB upsert succeeded ({len(ids)} chunks).")
             except Exception as e:
                 logger.error(f"ChromaDB upsert error: {e}")
 
@@ -176,16 +188,16 @@ class VectorStoreManager:
         query_emb = self.get_embedding(query)
         results = []
 
-        # 1. Try ChromaDB Query if available
-        if self.collection:
+        # 1. Try ChromaDB Query if available and non-empty
+        if self.collection and self.collection.count() > 0:
             try:
                 where_clause = {}
                 if scheme_slug and fact_type:
-                    where_clause = {"$and": [{"scheme_slug": scheme_slug}, {"fact_type": fact_type}]}
+                    where_clause = {"$and": [{"scheme_slug": {"$eq": scheme_slug}}, {"fact_type": {"$eq": fact_type}}]}
                 elif scheme_slug:
-                    where_clause = {"scheme_slug": scheme_slug}
+                    where_clause = {"scheme_slug": {"$eq": scheme_slug}}
                 elif fact_type:
-                    where_clause = {"fact_type": fact_type}
+                    where_clause = {"fact_type": {"$eq": fact_type}}
 
                 chroma_res = self.collection.query(
                     query_embeddings=[query_emb],
