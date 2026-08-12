@@ -17,7 +17,8 @@ build/
 # Local RAG data
 data/raw/
 data/processed/
-data/vector_db/
+data/vector_db/*
+!data/vector_db/persistent_store.json
 
 # ML / Hugging Face cache
 .cache/
