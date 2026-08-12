@@ -59,7 +59,6 @@ class VectorStoreManager:
     """
     def __init__(self):
         self.db_dir = settings.VECTOR_DB_DIR
-        self.db_dir.mkdir(parents=True, exist_ok=True)
         self.collection_name = settings.CHROMA_COLLECTION_NAME
         self.embedding_model_name = settings.EMBEDDING_MODEL_NAME
 
@@ -67,16 +66,17 @@ class VectorStoreManager:
         self.collection = None
         self.st_model = None
 
-        self._init_chroma_and_model()
-
-    def _init_chroma_and_model(self):
-        # 1. Skip heavy imports if running in Vercel serverless / production environment
+        # Detect serverless mode BEFORE attempting filesystem directory creation
         is_serverless = bool(os.getenv("VERCEL")) or settings.ENVIRONMENT == "production"
         if is_serverless:
             logger.info("Production serverless environment detected. Utilizing precomputed vector store.")
             return
 
-        # 2. Initialize SentenceTransformer BAAI/bge-large-en-v1.5 model if available (Local dev only)
+        self.db_dir.mkdir(parents=True, exist_ok=True)
+        self._init_chroma_and_model()
+
+    def _init_chroma_and_model(self):
+        # 1. Initialize SentenceTransformer BAAI/bge-large-en-v1.5 model if available (Local dev only)
         try:
             from sentence_transformers import SentenceTransformer
             logger.info(f"Loading embedding model '{self.embedding_model_name}'...")
